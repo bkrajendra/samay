@@ -1,0 +1,10 @@
+# console backend
+console/backend/.env
+console/backend/console
+
+# console frontend
+console/frontend/node_modules/
+console/frontend/dist/
+
+# Go
+*.test

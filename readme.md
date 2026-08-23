@@ -115,6 +115,79 @@ A successful query returns a valid offset/round-trip time from
 `time.iocare.in` — that confirms the server is reachable and serving time
 correctly.
 
+## Web console
+
+`console/` is a small web UI + API for monitoring and lightly operating the
+timeserver (dashboard, NTP sources, clients, diagnostics, force sync/step
+clock/restart). It runs as a second container (`console`) in the same
+`timeserver` pod — see
+`docs/superpowers/specs/2026-08-23-web-console-design.md` for the full
+design, including the security constraint that the UI only ever calls a
+fixed set of whitelisted `chronyc` operations, never raw shell commands.
+
+### Required Secret
+
+The console needs `CONSOLE_USERNAME`/`CONSOLE_PASSWORD` for its login page,
+provided via a `console-env` Secret (not committed to git):
+
+```
+kubectl create secret generic console-env \
+  -n timeserver \
+  --from-literal=CONSOLE_USERNAME=admin \
+  --from-literal=CONSOLE_PASSWORD='choose-a-real-password'
+```
+
+Optional overrides (same Secret, or omit for defaults): `LISTEN_ADDR`
+(default `:8080`), `CHRONY_SOCKET` (default `/run/chrony/chronyd.sock`),
+`COOKIE_SECURE` (default `false` — set `true` once this is behind TLS).
+
+### Build (CI)
+
+Pushing changes under `console/` to `main` triggers
+`.github/workflows/build-console.yml`, which builds `console/Dockerfile`
+and pushes to `ghcr.io/bkrajendra/samay-console:latest` (and
+`:sha-<short>`). Same one-time step as the timeserver image: set the
+`samay-console` package to **Public** in your GitHub packages settings
+after the first successful run (or use an `imagePullSecret`, same as
+described above for the timeserver image).
+
+### Local development (optional)
+
+Backend (needs a real or mock `chronyc`/socket to be useful; it will start
+without one but API calls will report chronyd as unreachable):
+
+```
+cd console/backend
+printf 'CONSOLE_USERNAME=admin\nCONSOLE_PASSWORD=devpassword\n' > .env
+go run ./cmd/server
+```
+
+Frontend (dev server proxies `/api` to `localhost:8080`, see
+`vite.config.ts`):
+
+```
+cd console/frontend
+npm install
+npm run dev
+```
+
+### Deploy
+
+Already part of `k8s/deployment.yaml` — applying it (see Deploy above)
+deploys both the `chronyd` and `console` containers together. Make sure the
+`console-env` Secret exists first.
+
+### Validate
+
+```
+kubectl -n timeserver get pods -o wide
+kubectl -n timeserver logs deploy/timeserver -c console
+```
+
+Then browse to `http://<vm-ip>:8080` (or `http://time.iocare.in:8080`),
+log in with the credentials from the `console-env` Secret, and check the
+Dashboard, Sources, Clients, and Diagnostics pages load live data.
+
 ## DNS
 
 `time.iocare.in` is assumed to already have an A record pointing at this VM's
