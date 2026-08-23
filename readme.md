@@ -1,4 +1,4 @@
-# samay — chronyd timeserver
+# Samay - chronyd timeserver
 
 A lightweight NTP time server (`chronyd`) for keeping IoT devices synced, running
 as a `hostNetwork` pod on a single-node Kubernetes cluster and exposed on
@@ -34,9 +34,9 @@ and reference it from the deployment:
 kubectl create secret docker-registry ghcr-pull \
   -n timeserver \
   --docker-server=ghcr.io \
-  --docker-username=<gh-username> \
-  --docker-password=<gh-PAT-with-read:packages> \
-  --docker-email=<email>
+  --docker-username=bkrajendra \
+  --docker-password=github_pat_xxx \
+  --docker-email=bkrajendra@gmail.com
 ```
 
 then add to `k8s/deployment.yaml`'s pod spec:

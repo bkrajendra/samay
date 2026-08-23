@@ -48,6 +48,8 @@ spec:
               subPath: chrony.conf
             - name: chrony-lib
               mountPath: /var/lib/chrony
+            - name: chrony-run
+              mountPath: /run/chrony
           resources:
             requests:
               cpu: 10m
@@ -60,4 +62,6 @@ spec:
           configMap:
             name: timeserver-config
         - name: chrony-lib
+          emptyDir: {}
+        - name: chrony-run
           emptyDir: {}
