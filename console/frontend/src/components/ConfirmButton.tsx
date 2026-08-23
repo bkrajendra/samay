@@ -15,7 +15,7 @@ interface ConfirmButtonProps extends Omit<ButtonProps, "onClick"> {
   title: string;
   description: string;
   confirmLabel?: string;
-  onConfirm: () => Promise<void> | void;
+  onConfirm: () => Promise<unknown> | void;
 }
 
 /**
