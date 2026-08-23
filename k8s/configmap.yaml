@@ -1,0 +1,25 @@
+# Generated from config/chrony.conf. Regenerate after editing that file:
+#   kubectl create configmap timeserver-config -n timeserver \
+#     --from-file=chrony.conf=config/chrony.conf \
+#     --dry-run=client -o yaml > k8s/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: timeserver-config
+  namespace: timeserver
+data:
+  chrony.conf: |
+    # samay timeserver - chrony.conf
+    #
+    # Upstream time sources
+    pool pool.ntp.org iburst
+
+    # Allow any client to query this server (open NTP server for the IoT fleet)
+    allow 0.0.0.0/0
+
+    # Serve time to clients even if not yet synced to an upstream source
+    local stratum 10
+
+    # Drift/measurement state (written to the chrony-lib emptyDir volume)
+    driftfile /var/lib/chrony/chrony.drift
+    logdir /var/log/chrony

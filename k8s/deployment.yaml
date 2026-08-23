@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: timeserver
+  namespace: timeserver
+  labels:
+    app: timeserver
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: timeserver
+  template:
+    metadata:
+      labels:
+        app: timeserver
+    spec:
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+        - key: node-role.kubernetes.io/master
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: chronyd
+          image: ghcr.io/bkrajendra/samay:latest
+          imagePullPolicy: Always
+          securityContext:
+            runAsUser: 0
+            capabilities:
+              add:
+                - SYS_TIME
+                - NET_BIND_SERVICE
+              drop:
+                - ALL
+          ports:
+            - name: ntp
+              containerPort: 123
+              protocol: UDP
+          volumeMounts:
+            - name: config
+              mountPath: /etc/chrony/chrony.conf
+              subPath: chrony.conf
+            - name: chrony-lib
+              mountPath: /var/lib/chrony
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+      volumes:
+        - name: config
+          configMap:
+            name: timeserver-config
+        - name: chrony-lib
+          emptyDir: {}
