@@ -27,6 +27,18 @@ spec:
         - key: node-role.kubernetes.io/master
           operator: Exists
           effect: NoSchedule
+      # A fresh emptyDir is created with permissive default permissions,
+      # which chronyd refuses to use for its command socket (it requires
+      # the directory not be group/world-writable). Fix the permissions
+      # here, before either main container starts, rather than granting
+      # chronyd or console extra capabilities to do it themselves.
+      initContainers:
+        - name: init-chrony-run
+          image: alpine:3.20
+          command: ["sh", "-c", "mkdir -p /run/chrony && chmod 0750 /run/chrony"]
+          volumeMounts:
+            - name: chrony-run
+              mountPath: /run/chrony
       containers:
         - name: chronyd
           image: ghcr.io/bkrajendra/samay:latest
